@@ -3,15 +3,26 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
+  # Self-monitoring
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
 
-  - job_name: 'node-exporter'
+  # Node metrics (CPU, RAM, disk, network)
+  - job_name: 'k3s-nodes'
     static_configs:
-      - targets: ['host.docker.internal:9100']  # For host metrics
+      - targets: ['host.docker.internal:9100']
 
-  # Add your own services here
-  # - job_name: 'your-service'
-  #   static_configs:
-  #     - targets: ['your-service:8080']
+  # Kubernetes object state (pods, nodes, deployments)
+  - job_name: 'kube-state-metrics'
+    static_configs:
+      - targets: ['host.docker.internal:30800']  # ← Your NodePort
+
+  # Container metrics (CPU, memory per container)
+  - job_name: 'k3s-cadvisor'
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true
+    static_configs:
+      - targets: ['10.42.0.1:10250'] 
+    metrics_path: /metrics/cadvisor
