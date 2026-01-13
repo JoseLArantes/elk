@@ -1,6 +1,12 @@
+# Prometheus Configuration for K3s Monitoring
+# Architecture: Prometheus runs in Docker Compose, k3s cluster runs on the same VM
+# Prometheus accesses k3s metrics via host.docker.internal (host network)
+
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
+  external_labels:
+    cluster: 'k3s'
 
 scrape_configs:
   # Self-monitoring
@@ -8,21 +14,35 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  # Node metrics (CPU, RAM, disk, network)
-  - job_name: 'k3s-nodes'
+  # Node metrics (CPU, RAM, disk, network) via Node Exporter
+  # Node Exporter runs in K3s with hostPort 9100, accessible from Docker
+  - job_name: 'node-exporter'
     static_configs:
       - targets: ['host.docker.internal:9100']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'k3s-node'
 
-  # Kubernetes object state (pods, nodes, deployments)
+  # Kubernetes object state (pods, nodes, deployments) via kube-state-metrics
+  # kube-state-metrics runs in K3s with NodePort 30800, accessible from Docker
   - job_name: 'kube-state-metrics'
     static_configs:
-      - targets: ['host.docker.internal:30800']  # ← Your NodePort
+      - targets: ['host.docker.internal:30800']
+    metrics_path: /metrics
 
-  # Container metrics (CPU, memory per container)
-  - job_name: 'k3s-cadvisor'
+  # Container metrics (CPU, memory per container) via k3s kubelet
+  # Architecture: Prometheus (Docker) → host.docker.internal → k3s kubelet on same VM
+  # k3s kubelet typically runs on port 10250
+  - job_name: 'kubelet'
     scheme: https
     tls_config:
       insecure_skip_verify: true
     static_configs:
-      - targets: ['10.42.0.1:10250'] 
+      - targets: 
+        - 'host.docker.internal:10250'
     metrics_path: /metrics/cadvisor
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'k3s-node'
