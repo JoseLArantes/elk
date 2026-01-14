@@ -218,6 +218,15 @@ Since both Docker and k3s run on the same VM, connectivity should work via `host
 - **Grafana**: http://localhost:3000
 - **Prometheus**: http://localhost:9090
 - **Kibana**: http://localhost:5601
+- **Loki**: http://localhost:3100
+
+## Logs (Loki)
+
+This stack also includes **Loki** + **Promtail** to collect Docker container logs and view them in Grafana.
+
+1. Open Grafana → **Explore**
+2. Select the **Loki** datasource
+3. Try a query like `{compose_service="prometheus"}` or `{container="grafana"}`
 - **Elasticsearch**: http://localhost:9200
 
 ## Additional Resources
