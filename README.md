@@ -227,6 +227,20 @@ This stack also includes **Loki** + **Promtail** to collect Docker container log
 1. Open Grafana → **Explore**
 2. Select the **Loki** datasource
 3. Try a query like `{compose_service="prometheus"}` or `{container="grafana"}`
+
+### Shipping K3s Kubernetes Logs to Loki
+
+Deploy Promtail in your K3s cluster as a DaemonSet to ship pod logs to the Loki instance running in this Docker Compose stack:
+
+```bash
+kubectl apply -f k8s/promtail-loki.yaml
+```
+
+Notes:
+- This is configured for the common setup where **k3s and docker-compose run on the same VM** and Loki is exposed on port `3100`.
+- If your cluster has multiple nodes and Loki runs on only one VM, edit `k8s/promtail-loki.yaml` and set `LOKI_URL` to that VM's IP/DNS (instead of `status.hostIP`).
+
+Then in Grafana → Explore → Loki, try queries like `{namespace="kube-system"}` or `{pod=~".+"}`.
 - **Elasticsearch**: http://localhost:9200
 
 ## Additional Resources
