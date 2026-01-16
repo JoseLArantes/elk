@@ -17,7 +17,7 @@ exporters:
 
   # Export logs to Loki
   loki:
-    endpoint: "http://loki:3100/loki/api/v1/push"
+    endpoint: "http://173.249.47.30:3100/loki/api/v1/push"
     # Adjust the URL above to match your Loki instance (e.g., localhost:3100 if on same net, or actual IP)
 
   # Debug output
