@@ -117,7 +117,7 @@ services:
   # PROMTAIL (ships Docker logs to Loki)
   # ---------------------------
   promtail:
-    image: grafana/promtail:2.9.4
+    image: grafana/promtail:main-005321e
     container_name: promtail
     command: -config.file=/etc/promtail/config.yml
     user: "0"
@@ -131,12 +131,41 @@ services:
     networks:
       - monitoring
 
+  # ---------------------------
+  # OTEL COLLECTOR (OTLP -> Loki/Prometheus)
+  # ---------------------------
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.93.0
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol-contrib/config.yml"]
+    depends_on:
+      - loki
+    volumes:
+      - ./otel/otel-collector-config.yml:/etc/otelcol-contrib/config.yml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8889:8889"   # Prometheus exporter (scraped by Prometheus)
+      - "13133:13133" # Health check
+    networks:
+      - monitoring
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: quizapp
+      POSTGRES_USER: quizapp
+      POSTGRES_PASSWORD: quizapp123
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
 volumes:
   es_data:
   prometheus_data:
   grafana_data:
   loki_data:
   promtail_positions:
+  pg_data:
 
 networks:
   monitoring:

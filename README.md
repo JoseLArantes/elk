@@ -218,30 +218,32 @@ Since both Docker and k3s run on the same VM, connectivity should work via `host
 - **Grafana**: http://localhost:3000
 - **Prometheus**: http://localhost:9090
 - **Kibana**: http://localhost:5601
+- **Elasticsearch**: http://localhost:9200
 - **Loki**: http://localhost:3100
 
 ## Logs (Loki)
 
-This stack also includes **Loki** + **Promtail** to collect Docker container logs and view them in Grafana.
-
-1. Open Grafana → **Explore**
-2. Select the **Loki** datasource
-3. Try a query like `{compose_service="prometheus"}` or `{container="grafana"}`
+Docker Compose logs are shipped to Loki via `promtail`. In Grafana → **Explore** → select **Loki**, try:
+- `{compose_service="prometheus"}`
+- `{container="grafana"}`
 
 ### Shipping K3s Kubernetes Logs to Loki
 
-Deploy Promtail in your K3s cluster as a DaemonSet to ship pod logs to the Loki instance running in this Docker Compose stack:
+Apply the DaemonSet manifest `k8s/promtail-loki.yaml`:
 
 ```bash
 kubectl apply -f k8s/promtail-loki.yaml
 ```
 
-Notes:
-- This is configured for the common setup where **k3s and docker-compose run on the same VM** and Loki is exposed on port `3100`.
-- If your cluster has multiple nodes and Loki runs on only one VM, edit `k8s/promtail-loki.yaml` and set `LOKI_URL` to that VM's IP/DNS (instead of `status.hostIP`).
+## OpenTelemetry Collector (OTLP)
 
-Then in Grafana → Explore → Loki, try queries like `{namespace="kube-system"}` or `{pod=~".+"}`.
-- **Elasticsearch**: http://localhost:9200
+The stack includes an OpenTelemetry Collector (`otel-collector`) that forwards:
+- OTLP **logs → Loki**
+- OTLP **metrics → Prometheus** (scrape job `otel-collector:8889`)
+
+Send OTLP to:
+- gRPC: `http://localhost:4317`
+- HTTP: `http://localhost:4318`
 
 ## Additional Resources
 

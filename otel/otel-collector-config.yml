@@ -1,0 +1,40 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+
+exporters:
+  # Export metrics to be scraped by Prometheus
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: tmqa_backend
+
+  # Export logs to Loki
+  loki:
+    endpoint: "http://loki:3100/loki/api/v1/push"
+    # Adjust the URL above to match your Loki instance (e.g., localhost:3100 if on same net, or actual IP)
+
+  # Debug output
+  debug:
+    verbosity: detailed
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus, debug]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [loki, debug]
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]
